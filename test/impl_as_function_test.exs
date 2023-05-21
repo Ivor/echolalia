@@ -10,23 +10,24 @@ defmodule EcholaliaTest.ImplAsFunctionTest do
       behaviour: EcholaliaTest.GoodbyeWorld.Behaviour,
       impl: &HelloWorld.get_goodbye_implementation/1
 
-    def get_hello_implementation([opts]), do: lang_impl(:hello, Keyword.fetch!(opts, :language))
+    def get_hello_implementation([opts]),
+      do: lang_implementation(:hello, Keyword.fetch!(opts, :language))
 
     def get_hello_implementation([_name, opts]),
-      do: lang_impl(:hello, Keyword.fetch!(opts, :language))
+      do: lang_implementation(:hello, Keyword.fetch!(opts, :language))
 
     def get_goodbye_implementation([opts]),
-      do: lang_impl(:goodbye, Keyword.fetch!(opts, :language))
+      do: lang_implementation(:goodbye, Keyword.fetch!(opts, :language))
 
     def get_goodbye_implementation([_name, opts]),
-      do: lang_impl(:goodbye, Keyword.fetch!(opts, :language))
+      do: lang_implementation(:goodbye, Keyword.fetch!(opts, :language))
 
-    defp lang_impl(behaviour, language) do
+    defp lang_implementation(behaviour, language) do
       case {behaviour, language} do
-        {:hello, :english} -> EcholaliaTest.HelloWorld.EnglishImpl
-        {:hello, :french} -> EcholaliaTest.HelloWorld.FrenchImpl
-        {:goodbye, :english} -> EcholaliaTest.GoodbyeWorld.EnglishImpl
-        {:goodbye, :french} -> EcholaliaTest.GoodbyeWorld.FrenchImpl
+        {:hello, :english} -> EcholaliaTest.HelloWorld.English
+        {:hello, :french} -> EcholaliaTest.HelloWorld.French
+        {:goodbye, :english} -> EcholaliaTest.GoodbyeWorld.English
+        {:goodbye, :french} -> EcholaliaTest.GoodbyeWorld.French
       end
     end
   end

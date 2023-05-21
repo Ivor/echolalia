@@ -4,11 +4,11 @@ defmodule EcholaliaTest.ImplAsModuleTest do
   defmodule Interface do
     use Echolalia,
       behaviour: EcholaliaTest.Arithmetic.AddBehaviour,
-      impl: EcholaliaTest.Arithmetic.AdderImpl
+      impl: EcholaliaTest.Arithmetic.Adder
 
     use Echolalia,
       behaviour: EcholaliaTest.Arithmetic.SubtractBehaviour,
-      impl: EcholaliaTest.Arithmetic.SubtractorImpl
+      impl: EcholaliaTest.Arithmetic.Subtractor
   end
 
   test "Interface implements the AddBehaviour behaviour" do

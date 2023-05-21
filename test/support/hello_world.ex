@@ -6,7 +6,7 @@ defmodule EcholaliaTest.HelloWorld.Behaviour do
   @callback how_are_you_name(String.t(), opts) :: String.t()
 end
 
-defmodule EcholaliaTest.HelloWorld.EnglishImpl do
+defmodule EcholaliaTest.HelloWorld.English do
   @behaviour EcholaliaTest.HelloWorld.Behaviour
 
   @impl true
@@ -30,7 +30,7 @@ defmodule EcholaliaTest.HelloWorld.EnglishImpl do
   end
 end
 
-defmodule EcholaliaTest.HelloWorld.FrenchImpl do
+defmodule EcholaliaTest.HelloWorld.French do
   @behaviour EcholaliaTest.HelloWorld.Behaviour
 
   @impl true

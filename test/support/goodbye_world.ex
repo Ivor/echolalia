@@ -4,7 +4,7 @@ defmodule EcholaliaTest.GoodbyeWorld.Behaviour do
   @callback goodbye_name(String.t(), opts) :: String.t()
 end
 
-defmodule EcholaliaTest.GoodbyeWorld.EnglishImpl do
+defmodule EcholaliaTest.GoodbyeWorld.English do
   @behaviour EcholaliaTest.GoodbyeWorld.Behaviour
 
   @impl true
@@ -18,7 +18,7 @@ defmodule EcholaliaTest.GoodbyeWorld.EnglishImpl do
   end
 end
 
-defmodule EcholaliaTest.GoodbyeWorld.FrenchImpl do
+defmodule EcholaliaTest.GoodbyeWorld.French do
   @behaviour EcholaliaTest.GoodbyeWorld.Behaviour
 
   @impl true

@@ -11,21 +11,21 @@ defmodule EcholaliaTest.Arithmetic do
     @callback multiply(a :: number, b :: number) :: number
   end
 
-  defmodule AdderImpl do
+  defmodule Adder do
     @behaviour EcholaliaTest.Arithmetic.AddBehaviour
 
     @impl true
     def add(a, b), do: a + b
   end
 
-  defmodule SubtractorImpl do
+  defmodule Subtractor do
     @behaviour EcholaliaTest.Arithmetic.SubtractBehaviour
 
     @impl true
     def subtract(a, b), do: a - b
   end
 
-  defmodule MultiplierImpl do
+  defmodule Multiplier do
     @behaviour EcholaliaTest.Arithmetic.MultiplyBehaviour
 
     @impl true
