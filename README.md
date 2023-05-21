@@ -20,6 +20,11 @@ To use `Echolalia`, you use it inside a module, providing it with the `:behaviou
 ```elixir
 defmodule MyModule do
   use Echolalia, behaviour: MyBehaviour, impl: MyImplementation
+  use Echolalia, behaviour: MyOtherBehaviour, catch_all: MyModule.catch_all/2
+
+  def catch_all(funtion_name, original_arguments) do
+    ...
+  end
 end
 ```
 
@@ -28,6 +33,9 @@ end
 ### Options
 * `:behaviour` - The behaviour that you want to implement. This should be an atom that identifies a module with a behaviour definition.
 * `:impl` - The implementation of the behaviour. This can either be a function or an atom that identifies a module. If it is a function, it will be called with the arguments for each function. If it is a module, the corresponding function in the module will be called.
+* `:catch_all` - A function that will be called instead of trying to call a function on a behaviour. The function receives two arguments. The function name as an atom, and the the original arguments as a list. This is useful if you need to do some special handling like potentially execute the function in a separate task.
+
+NOTE: You cannot specify both `:impl` and `:catch_all`.
 
 ## License
 The Echolalia library is released under the [MIT License](https://opensource.org/licenses/MIT).
