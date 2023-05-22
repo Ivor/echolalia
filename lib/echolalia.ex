@@ -11,7 +11,7 @@ defmodule Echolalia do
   function can either be an atom that identifies a module or a function that will be called
   with the function arguments.
 
-  ## How to use
+  ## Usage
   To use `Echolalia`, you just need to `use` it inside a module, providing it with the
   `:behaviour` that you want to implement and the `:impl` that provides the implementation:
 
@@ -30,22 +30,13 @@ defmodule Echolalia do
   * :impl - The implementation of the behaviour. This can either be a function or an atom
   that identifies a module. If it is a function, it will be called with the arguments for
   each function. If it is a module, the corresponding function in the module will be called.
-  * :catch_all - A function that will be called instead of trying to call a function on a behaviour.
-  This is useful if you need to do some special handling like potentially execute the function in a separate task.
-
-  NOTE: You cannot specify both `:impl` and `:catch_all`.
   """
 
   defmacro __using__(opts) do
     behaviour = Keyword.fetch!(opts, :behaviour)
     impl = Keyword.get(opts, :impl, nil)
-    catch_all_fn = Keyword.get(opts, :catch_all, nil)
 
-    if impl && catch_all_fn do
-      raise "You cannot specify both :impl and :catch_all"
-    end
-
-    quote bind_quoted: [behaviour: behaviour, impl: impl, catch_all_fn: catch_all_fn] do
+    quote bind_quoted: [behaviour: behaviour, impl: impl] do
       @behaviour behaviour
 
       callbacks = behaviour.behaviour_info(:callbacks)
@@ -53,24 +44,17 @@ defmodule Echolalia do
       for {function_name, arity} <- callbacks do
         args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
 
-        if catch_all_fn do
+        if is_function(impl) do
           @impl behaviour
           def unquote(function_name)(unquote_splicing(args)) do
-            unquote(catch_all_fn).(unquote(function_name), unquote(args))
+            unquote(impl).(unquote(args))
+            |> apply(unquote(function_name), unquote(args))
           end
         else
-          if is_function(impl) do
-            @impl behaviour
-            def unquote(function_name)(unquote_splicing(args)) do
-              unquote(impl).(unquote(args))
-              |> apply(unquote(function_name), unquote(args))
-            end
-          else
-            @impl behaviour
-            def unquote(function_name)(unquote_splicing(args)) do
-              unquote(impl)
-              |> apply(unquote(function_name), unquote(args))
-            end
+          @impl behaviour
+          def unquote(function_name)(unquote_splicing(args)) do
+            unquote(impl)
+            |> apply(unquote(function_name), unquote(args))
           end
         end
       end

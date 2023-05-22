@@ -5,9 +5,9 @@ defmodule EcholaliaTest.CaseByCase.Behaviour do
 end
 
 defmodule EcholaliaTest.CaseByCase do
-  use Echolalia,
+  use Echolalia.CatchAll,
     behaviour: EcholaliaTest.CaseByCase.Behaviour,
-    catch_all: &EcholaliaTest.CaseByCase.handle_case_by_case/2
+    impl: &EcholaliaTest.CaseByCase.handle_case_by_case/2
 
   # NOTE: Doing string manipulation in parallel like this is very unlikely to
   # be faster than doing it in a single process. This is just an example of

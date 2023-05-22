@@ -33,6 +33,7 @@ defmodule Echolalia.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:eliver, "~> 2.0", only: :dev},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:mox, "~> 1.0", only: :test}
     ]
