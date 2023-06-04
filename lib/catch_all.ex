@@ -28,12 +28,21 @@ defmodule Echolalia.CatchAll do
     behaviour = Keyword.fetch!(opts, :behaviour)
     catch_all_fn = Keyword.fetch!(opts, :impl)
 
-    quote bind_quoted: [behaviour: behaviour, catch_all_fn: catch_all_fn] do
-      @behaviour behaviour
+    except = Keyword.get(opts, :except, nil)
+    only = Keyword.get(opts, :only, nil)
 
-      callbacks = behaviour.behaviour_info(:callbacks)
+    quote bind_quoted: [
+            behaviour: behaviour,
+            catch_all_fn: catch_all_fn,
+            except: except,
+            only: only
+          ] do
+      unless Enum.member?(Module.get_attribute(__MODULE__, :behaviour), behaviour) do
+        @behaviour behaviour
+      end
 
-      for {function_name, arity} <- callbacks do
+      for {function_name, arity} <-
+            Echolalia.get_callbacks(behaviour, %{except: except, only: only}) do
         args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
 
         @impl behaviour

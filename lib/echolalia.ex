@@ -32,16 +32,45 @@ defmodule Echolalia do
   each function. If it is a module, the corresponding function in the module will be called.
   """
 
+  @doc false
+  def get_callbacks(behaviour, filters)
+
+  def get_callbacks(behaviour, %{only: only_list, except: nil}) when is_list(only_list) do
+    behaviour.behaviour_info(:callbacks)
+    |> Enum.filter(fn {function_name, _} -> function_name in only_list end)
+  end
+
+  def get_callbacks(behaviour, %{only: nil, except: except_list}) when is_list(except_list) do
+    behaviour.behaviour_info(:callbacks)
+    |> Enum.reject(fn {function_name, _} -> function_name in except_list end)
+  end
+
+  def get_callbacks(behaviour, %{only: nil, except: nil}) do
+    behaviour.behaviour_info(:callbacks)
+  end
+
+  def get_callbacks(_, _),
+    do: raise(ArgumentError, "You can't provide both :only and :except options")
+
   defmacro __using__(opts) do
     behaviour = Keyword.fetch!(opts, :behaviour)
     impl = Keyword.get(opts, :impl, nil)
 
-    quote bind_quoted: [behaviour: behaviour, impl: impl] do
-      @behaviour behaviour
+    except = Keyword.get(opts, :except, nil)
+    only = Keyword.get(opts, :only, nil)
 
-      callbacks = behaviour.behaviour_info(:callbacks)
+    quote bind_quoted: [
+            behaviour: behaviour,
+            impl: impl,
+            except: except,
+            only: only
+          ] do
+      unless Enum.member?(Module.get_attribute(__MODULE__, :behaviour), behaviour) do
+        @behaviour behaviour
+      end
 
-      for {function_name, arity} <- callbacks do
+      for {function_name, arity} <-
+            Echolalia.get_callbacks(behaviour, %{except: except, only: only}) do
         args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
 
         if is_function(impl) do

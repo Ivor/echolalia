@@ -2,13 +2,33 @@ defmodule EcholaliaTest.ImplAsFunctionTest do
   use ExUnit.Case
 
   defmodule HelloWorld do
+    @behaviour EcholaliaTest.HelloWorld.Behaviour
+
+    # Only implementation for the one behaviour.
+    # Except for one function.
     use Echolalia,
       behaviour: EcholaliaTest.HelloWorld.Behaviour,
-      impl: &HelloWorld.get_hello_implementation/1
+      impl: &HelloWorld.get_hello_implementation/1,
+      except: [:hello_name]
 
+    # Specify a different function to get the implementation for the functions in :only.
+    use Echolalia,
+      behaviour: EcholaliaTest.HelloWorld.Behaviour,
+      impl: &HelloWorld.hello_name_implementation/1,
+      only: [:hello_name]
+
+    # Specify a different function to get the implementation for a different behaviour
     use Echolalia,
       behaviour: EcholaliaTest.GoodbyeWorld.Behaviour,
       impl: &HelloWorld.get_goodbye_implementation/1
+
+    def hello_name_implementation([_name, opts]) do
+      Keyword.get(opts, :language, :english)
+      |> case do
+        :english -> EcholaliaTest.HelloWorld.English
+        :french -> EcholaliaTest.HelloWorld.French
+      end
+    end
 
     def get_hello_implementation([opts]),
       do: lang_implementation(:hello, Keyword.fetch!(opts, :language))

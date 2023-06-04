@@ -2,12 +2,27 @@ defmodule EcholaliaTest.CaseByCase.Behaviour do
   @type opts :: Keyword.t()
   @callback upcase(string :: String.t(), opts) :: String.t()
   @callback downcase(string :: String.t(), opts) :: String.t()
+  @callback random_case(string :: String.t(), opts) :: String.t()
 end
 
 defmodule EcholaliaTest.CaseByCase do
   use Echolalia.CatchAll,
     behaviour: EcholaliaTest.CaseByCase.Behaviour,
-    impl: &EcholaliaTest.CaseByCase.handle_case_by_case/2
+    impl: &EcholaliaTest.CaseByCase.handle_case_by_case/2,
+    except: [:random_case]
+
+  use Echolalia.CatchAll,
+    behaviour: EcholaliaTest.CaseByCase.Behaviour,
+    impl: &EcholaliaTest.CaseByCase.handle_random_case/2,
+    only: [:random_case]
+
+  def handle_random_case(_request_name, [string, opts]) do
+    if :rand.uniform() < 0.5 do
+      handle_case_by_case(:upcase, [string, opts])
+    else
+      handle_case_by_case(:downcase, [string, opts])
+    end
+  end
 
   # NOTE: Doing string manipulation in parallel like this is very unlikely to
   # be faster than doing it in a single process. This is just an example of
