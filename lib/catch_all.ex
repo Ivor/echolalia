@@ -43,11 +43,18 @@ defmodule Echolalia.CatchAll do
 
       for {function_name, arity} <-
             Echolalia.get_callbacks(behaviour, %{except: except, only: only}) do
-        args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
+        if arity > 0 do
+          args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
 
-        @impl behaviour
-        def unquote(function_name)(unquote_splicing(args)) do
-          unquote(catch_all_fn).(unquote(function_name), unquote(args))
+          @impl behaviour
+          def unquote(function_name)(unquote_splicing(args)) do
+            unquote(catch_all_fn).(unquote(function_name), unquote(args))
+          end
+        else
+          @impl behaviour
+          def unquote(function_name)() do
+            unquote(catch_all_fn).(unquote(function_name), [])
+          end
         end
       end
     end

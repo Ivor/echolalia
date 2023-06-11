@@ -1,3 +1,28 @@
+defmodule Echolalia.FunctionBuilder do
+  defmacro define_function(impl, behaviour, function_name, args \\ []) do
+    quote bind_quoted: [
+            impl: impl,
+            behaviour: behaviour,
+            function_name: function_name,
+            args: args
+          ] do
+      @impl behaviour
+
+      if is_function(impl) do
+        def unquote(function_name)(unquote_splicing(args)) do
+          unquote(impl).(unquote(args))
+          |> apply(unquote(function_name), unquote(args))
+        end
+      else
+        def unquote(function_name)(unquote_splicing(args)) do
+          unquote(impl)
+          |> apply(unquote(function_name), unquote(args))
+        end
+      end
+    end
+  end
+end
+
 defmodule Echolalia do
   @moduledoc """
   The `Echolalia` module is a dynamic implementation generator that addresses a common pattern
@@ -69,22 +94,15 @@ defmodule Echolalia do
         @behaviour behaviour
       end
 
+      require Echolalia.FunctionBuilder
+
       for {function_name, arity} <-
             Echolalia.get_callbacks(behaviour, %{except: except, only: only}) do
-        args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
-
-        if is_function(impl) do
-          @impl behaviour
-          def unquote(function_name)(unquote_splicing(args)) do
-            unquote(impl).(unquote(args))
-            |> apply(unquote(function_name), unquote(args))
-          end
+        if arity > 0 do
+          args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
+          Echolalia.FunctionBuilder.define_function(impl, behaviour, function_name, args)
         else
-          @impl behaviour
-          def unquote(function_name)(unquote_splicing(args)) do
-            unquote(impl)
-            |> apply(unquote(function_name), unquote(args))
-          end
+          Echolalia.FunctionBuilder.define_function(impl, behaviour, function_name)
         end
       end
     end
