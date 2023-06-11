@@ -1,28 +1,3 @@
-defmodule Echolalia.FunctionBuilder do
-  defmacro define_function(impl, behaviour, function_name, args \\ []) do
-    quote bind_quoted: [
-            impl: impl,
-            behaviour: behaviour,
-            function_name: function_name,
-            args: args
-          ] do
-      @impl behaviour
-
-      if is_function(impl) do
-        def unquote(function_name)(unquote_splicing(args)) do
-          unquote(impl).(unquote(args))
-          |> apply(unquote(function_name), unquote(args))
-        end
-      else
-        def unquote(function_name)(unquote_splicing(args)) do
-          unquote(impl)
-          |> apply(unquote(function_name), unquote(args))
-        end
-      end
-    end
-  end
-end
-
 defmodule Echolalia do
   @moduledoc """
   The `Echolalia` module is a dynamic implementation generator that addresses a common pattern
@@ -84,27 +59,53 @@ defmodule Echolalia do
     except = Keyword.get(opts, :except, nil)
     only = Keyword.get(opts, :only, nil)
 
-    quote bind_quoted: [
-            behaviour: behaviour,
-            impl: impl,
-            except: except,
-            only: only
-          ] do
-      unless Enum.member?(Module.get_attribute(__MODULE__, :behaviour), behaviour) do
-        @behaviour behaviour
-      end
-
-      require Echolalia.FunctionBuilder
-
-      for {function_name, arity} <-
-            Echolalia.get_callbacks(behaviour, %{except: except, only: only}) do
-        if arity > 0 do
-          args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
-          Echolalia.FunctionBuilder.define_function(impl, behaviour, function_name, args)
-        else
-          Echolalia.FunctionBuilder.define_function(impl, behaviour, function_name)
+    require_quote =
+      quote bind_quoted: [behaviour_var: behaviour] do
+        # If the behaviour is not already set, set it
+        unless Enum.member?(Module.get_attribute(__MODULE__, :behaviour), behaviour_var) do
+          @behaviour behaviour_var
         end
+
+        # Require the function builder so it is available for the function definition quotes
+        require Echolalia.CallbackBuilder
       end
-    end
+
+    # For each of the callbacks, generate a function definition
+    Echolalia.get_callbacks(Macro.expand(behaviour, __ENV__), %{except: except, only: only})
+    |> Enum.reduce([require_quote], fn
+      # With 0 arity we ignore arguments.
+      {function_name, 0}, acc ->
+        fn_quote =
+          quote bind_quoted: [
+                  function_atom: function_name,
+                  behaviour: behaviour,
+                  impl: impl
+                ] do
+            Echolalia.CallbackBuilder.build_callback(
+              impl,
+              behaviour,
+              function_atom
+            )
+          end
+
+        [fn_quote | acc]
+
+      # If arity is not 0 we pass and bind the arguments to the implementation
+      {function_name, arity}, acc ->
+        fn_quote =
+          quote bind_quoted: [
+                  function_atom: function_name,
+                  arity: arity,
+                  impl: impl,
+                  behaviour: behaviour
+                ] do
+            args_ast = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
+
+            Echolalia.CallbackBuilder.build_callback(impl, behaviour, function_atom, args_ast)
+          end
+
+        [fn_quote | acc]
+    end)
+    |> Enum.reverse()
   end
 end

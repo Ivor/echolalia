@@ -26,8 +26,6 @@ defmodule EcholaliaTest.ArityWorksTest do
       behaviour: EcholaliaTest.ArityWorks.Behaviour,
       impl: &__MODULE__.catch_all/2
 
-    IO.inspect(__MODULE__, label: "__MODULE__")
-
     def catch_all(function_name, args)
 
     def catch_all(:function_with_arity, args), do: length(args)

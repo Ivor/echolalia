@@ -12,8 +12,7 @@ defmodule EcholaliaTest.ArityWorks do
     def function_with_arity(), do: 0
 
     @impl EcholaliaTest.ArityWorks.Behaviour
-    def function_with_arity(a) do
-      IO.inspect(a, label: "AAA")
+    def function_with_arity(_a) do
       1
     end
 

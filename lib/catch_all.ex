@@ -1,11 +1,15 @@
 defmodule Echolalia.CatchAll do
   @moduledoc """
-  The `Echolalia.CatchAll` module is a variant of the `Echolalia` module that provides a "catch-all" implementation for a behaviour. This means that instead of providing a specific implementation for each function of the behaviour, a single function is provided that will be used for all functions of the behaviour.
+  The `Echolalia.CatchAll` module is a variant of the `Echolalia` module that provides a "catch-all" implementation for a behaviour.
+  This means that instead of providing a specific implementation for each function of the behaviour,
+  a single function is provided that will be used for all functions of the behaviour.
 
-  This can be particularly useful in cases where the implementation of the behaviour's functions is similar or identical, or when you want to provide a default implementation that can be overridden.
+  This can be particularly useful in cases where the implementation of the behaviour's functions is similar or identical,
+  or when you want to provide a default implementation that can be overridden.
 
   ## Usage
-  To use `Echolalia.CatchAll`, you just need to `use` it inside a module, providing it with the `:behaviour` that you want to implement and the `:impl` that provides the catch-all implementation:
+  To use `Echolalia.CatchAll`, you just need to `use` it inside a module, providing it with the `:behaviour` that you want to implement
+  and the `:impl` that provides the catch-all implementation:
 
   ```elixir
   defmodule MyModule do
@@ -31,32 +35,47 @@ defmodule Echolalia.CatchAll do
     except = Keyword.get(opts, :except, nil)
     only = Keyword.get(opts, :only, nil)
 
-    quote bind_quoted: [
-            behaviour: behaviour,
-            catch_all_fn: catch_all_fn,
-            except: except,
-            only: only
-          ] do
-      unless Enum.member?(Module.get_attribute(__MODULE__, :behaviour), behaviour) do
-        @behaviour behaviour
-      end
-
-      for {function_name, arity} <-
-            Echolalia.get_callbacks(behaviour, %{except: except, only: only}) do
-        if arity > 0 do
-          args = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
-
-          @impl behaviour
-          def unquote(function_name)(unquote_splicing(args)) do
-            unquote(catch_all_fn).(unquote(function_name), unquote(args))
-          end
-        else
-          @impl behaviour
-          def unquote(function_name)() do
-            unquote(catch_all_fn).(unquote(function_name), [])
-          end
+    behaviour_quote =
+      quote bind_quoted: [behaviour: behaviour] do
+        unless Enum.member?(Module.get_attribute(__MODULE__, :behaviour), behaviour) do
+          @behaviour behaviour
         end
       end
-    end
+
+    Echolalia.get_callbacks(Macro.expand(behaviour, __ENV__), %{except: except, only: only})
+    |> Enum.reduce([behaviour_quote], fn
+      {function_name, 0}, acc ->
+        fn_quote =
+          quote bind_quoted: [
+                  behaviour: behaviour,
+                  function_name: function_name,
+                  catch_all_fn: catch_all_fn
+                ] do
+            @impl behaviour
+            def unquote(function_name)() do
+              unquote(catch_all_fn).(unquote(function_name), [])
+            end
+          end
+
+        [fn_quote | acc]
+
+      {function_name, arity}, acc ->
+        fn_quote =
+          quote bind_quoted: [
+                  behaviour: behaviour,
+                  function_name: function_name,
+                  arity: arity,
+                  catch_all_fn: catch_all_fn
+                ] do
+            args_ast = for x <- 1..arity, do: {String.to_atom("arg#{x}"), [], Elixir}
+            @impl behaviour
+            def unquote(function_name)(unquote_splicing(args_ast)) do
+              unquote(catch_all_fn).(unquote(function_name), unquote(args_ast))
+            end
+          end
+
+        [fn_quote | acc]
+    end)
+    |> Enum.reverse()
   end
 end
