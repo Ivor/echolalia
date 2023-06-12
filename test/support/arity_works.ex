@@ -20,11 +20,3 @@ defmodule EcholaliaTest.ArityWorks do
     def function_with_arity(_, _), do: 2
   end
 end
-
-defmodule EcholaliaTest.CatchAllWithArityZero do
-  use Echolalia.CatchAll,
-    behaviour: EcholaliaTest.ArityWorks.Behaviour,
-    impl: &EcholaliaTest.CatchAllWithArityZero.catch_all/2
-
-  def catch_all(:function_with_arity, args), do: length(args)
-end

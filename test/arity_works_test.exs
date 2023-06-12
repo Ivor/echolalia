@@ -31,6 +31,28 @@ defmodule EcholaliaTest.ArityWorksTest do
     def catch_all(:function_with_arity, args), do: length(args)
   end
 
+  defmodule ExceptWithArity do
+    use Echolalia,
+      behaviour: EcholaliaTest.ArityWorks.Behaviour,
+      impl: EcholaliaTest.ArityWorks.Implementation,
+      except: [function_with_arity: 1]
+
+    @impl EcholaliaTest.ArityWorks.Behaviour
+    def function_with_arity(arg1), do: arg1
+  end
+
+  defmodule OnlyWithArity do
+    use Echolalia,
+      behaviour: EcholaliaTest.ArityWorks.Behaviour,
+      impl: EcholaliaTest.ArityWorks.Implementation,
+      only: [function_with_arity: 2]
+
+    @impl EcholaliaTest.ArityWorks.Behaviour
+    def function_with_arity(arg1), do: arg1
+    @impl EcholaliaTest.ArityWorks.Behaviour
+    def function_with_arity(), do: :zero
+  end
+
   test "returns the correct arity when passing a module as implementation" do
     assert EcholaliaTest.ArityWorksTest.TestWithModuleFacade.function_with_arity() == 0
     assert EcholaliaTest.ArityWorksTest.TestWithModuleFacade.function_with_arity(1) == 1
@@ -47,5 +69,19 @@ defmodule EcholaliaTest.ArityWorksTest do
     assert EcholaliaTest.ArityWorksTest.TestWithCatchAllFacade.function_with_arity() == 0
     assert EcholaliaTest.ArityWorksTest.TestWithCatchAllFacade.function_with_arity(1) == 1
     assert EcholaliaTest.ArityWorksTest.TestWithCatchAllFacade.function_with_arity(1, 2) == 2
+  end
+
+  test "returns the correct arity when using except" do
+    assert EcholaliaTest.ArityWorksTest.ExceptWithArity.function_with_arity() == 0
+    assert EcholaliaTest.ArityWorksTest.ExceptWithArity.function_with_arity(1) == 1
+    assert EcholaliaTest.ArityWorksTest.ExceptWithArity.function_with_arity(2) == 2
+    assert EcholaliaTest.ArityWorksTest.ExceptWithArity.function_with_arity(1, 2) == 2
+  end
+
+  test "returns the correct arity when using only" do
+    assert EcholaliaTest.ArityWorksTest.OnlyWithArity.function_with_arity() == :zero
+    assert EcholaliaTest.ArityWorksTest.OnlyWithArity.function_with_arity(1) == 1
+    assert EcholaliaTest.ArityWorksTest.OnlyWithArity.function_with_arity(2) == 2
+    assert EcholaliaTest.ArityWorksTest.OnlyWithArity.function_with_arity(1, 2) == 2
   end
 end

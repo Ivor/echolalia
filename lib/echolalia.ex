@@ -32,26 +32,6 @@ defmodule Echolalia do
   each function. If it is a module, the corresponding function in the module will be called.
   """
 
-  @doc false
-  def get_callbacks(behaviour, filters)
-
-  def get_callbacks(behaviour, %{only: only_list, except: nil}) when is_list(only_list) do
-    behaviour.behaviour_info(:callbacks)
-    |> Enum.filter(fn {function_name, _} -> function_name in only_list end)
-  end
-
-  def get_callbacks(behaviour, %{only: nil, except: except_list}) when is_list(except_list) do
-    behaviour.behaviour_info(:callbacks)
-    |> Enum.reject(fn {function_name, _} -> function_name in except_list end)
-  end
-
-  def get_callbacks(behaviour, %{only: nil, except: nil}) do
-    behaviour.behaviour_info(:callbacks)
-  end
-
-  def get_callbacks(_, _),
-    do: raise(ArgumentError, "You can't provide both :only and :except options")
-
   defmacro __using__(opts) do
     behaviour = Keyword.fetch!(opts, :behaviour)
     impl = Keyword.get(opts, :impl, nil)
@@ -107,5 +87,31 @@ defmodule Echolalia do
         [fn_quote | acc]
     end)
     |> Enum.reverse()
+  end
+
+  @doc false
+  def get_callbacks(behaviour, filters)
+
+  def get_callbacks(behaviour, %{only: only_list, except: nil}) when is_list(only_list) do
+    behaviour.behaviour_info(:callbacks)
+    |> Enum.filter(&fn_in_list(only_list).(&1))
+  end
+
+  def get_callbacks(behaviour, %{only: nil, except: except_list}) when is_list(except_list) do
+    behaviour.behaviour_info(:callbacks)
+    |> Enum.reject(&fn_in_list(except_list).(&1))
+  end
+
+  def get_callbacks(behaviour, %{only: nil, except: nil}) do
+    behaviour.behaviour_info(:callbacks)
+  end
+
+  def get_callbacks(_, _),
+    do: raise(ArgumentError, "You can't provide both :only and :except options")
+
+  defp fn_in_list(list) do
+    fn {function_name, _arity} = fn_tuple ->
+      function_name in list || fn_tuple in list
+    end
   end
 end
