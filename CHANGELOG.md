@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0
+* Optionally consider arity in except/only lists. 
+
 ## 0.2.1
 * Fix issue where zero-arity callbacks was not handled correctly. 
 
